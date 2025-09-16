@@ -31,11 +31,12 @@ export class AuthService {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(dto.password, saltRounds);
 
-    // Create user
+    // Create user with name field
     const user = await this.db.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
+        name: dto.name, // Include the name field
         role: UserRole.USER,
       },
     });
@@ -49,6 +50,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name, // Include name in response
         role: user.role,
       },
       tokens,
@@ -66,12 +68,6 @@ export class AuthService {
     // Find user
     const user = await this.db.user.findUnique({
       where: { email: dto.email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        role: true,
-      }
     });
 
     if (!user) {
@@ -93,6 +89,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name, // Include name in response
         role: user.role,
       },
       tokens,
@@ -113,11 +110,6 @@ export class AuthService {
       // Check if user exists
       const user = await this.db.user.findUnique({
         where: { id: payload.userId },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-        }
       });
 
       if (!user) {

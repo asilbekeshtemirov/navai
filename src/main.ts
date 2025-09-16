@@ -132,9 +132,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  // JSON 404 for unknown routes
-  app.use((req, res) => ApiResponse.notFound(res, 'Route not found'));
-
   const port = parseInt(process.env.PORT || '3000', 10);
   
   // Run database seeding
@@ -150,6 +147,10 @@ async function bootstrap() {
   
   await app.listen(port);
 
+  // JSON 404 for unknown routes - This should be applied AFTER app.listen()
+  // In NestJS, we should let the framework handle 404s by default
+  // If you want custom 404 handling, it should be done through exception filters
+  
   const proto = httpsOptions ? 'https' : 'http';
   const wsProto = httpsOptions ? 'wss' : 'ws';
   
