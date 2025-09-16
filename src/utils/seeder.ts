@@ -19,10 +19,6 @@ export class DatabaseSeeder {
         return;
       }
       
-      // Create default admin user
-      const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
-      const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-      
       // Check if we can connect to the database
       try {
         // Test database connection first
@@ -34,26 +30,13 @@ export class DatabaseSeeder {
           return;
         }
         
-        const existingAdmin = await this.db.user.findUnique({
-          where: { email: adminEmail },
-        });
-        
-        if (!existingAdmin) {
-          const hashedPassword = await bcrypt.hash(adminPassword, 10);
-          
-          await this.db.user.create({
-            data: {
-              email: adminEmail,
-              password: hashedPassword,
-              role: UserRole.SUPER_ADMIN,
-              isActive: true,
-            },
-          });
-          
-          logger.info('Admin user created', { email: adminEmail });
-        } else {
-          logger.info('Admin user already exists', { email: adminEmail });
-        }
+        // Create default users for each role
+        await this.createDefaultUser('superadmin@example.com', 'SuperAdmin123', UserRole.SUPER_ADMIN, 'Super Admin');
+        await this.createDefaultUser('admin@example.com', 'Admin123', UserRole.ADMIN, 'Admin User');
+        await this.createDefaultUser('moderator@example.com', 'Moderator123', UserRole.MODERATOR, 'Moderator User');
+        await this.createDefaultUser('premium@example.com', 'Premium123', UserRole.PREMIUM, 'Premium User');
+        await this.createDefaultUser('user@example.com', 'User123', UserRole.USER, 'Regular User');
+        await this.createDefaultUser('guest@example.com', 'Guest123', UserRole.GUEST, 'Guest User');
         
         logger.info('Database seeding completed');
       } catch (dbError) {
@@ -62,6 +45,34 @@ export class DatabaseSeeder {
     } catch (error) {
       logger.error('Database seeding failed', { error: error.message });
       // Don't throw error as seeding should not fail the application startup
+    }
+  }
+
+  private async createDefaultUser(email: string, password: string, role: UserRole, name: string) {
+    try {
+      const existingUser = await this.db.user.findUnique({
+        where: { email: email },
+      });
+      
+      if (!existingUser) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        await this.db.user.create({
+          data: {
+            email: email,
+            password: hashedPassword,
+            name: name,
+            role: role,
+            isActive: true,
+          },
+        });
+        
+        logger.info(`${role} user created`, { email: email, name: name });
+      } else {
+        logger.info(`${role} user already exists`, { email: email, name: existingUser.name || 'Unknown' });
+      }
+    } catch (error) {
+      logger.error(`Failed to create ${role} user`, { email: email, error: error.message });
     }
   }
 }
